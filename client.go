@@ -1,22 +1,28 @@
 package fxa
 
 import (
+	"bytes"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"log"
-	_ "net/http"
+	"net/http"
 )
 
-type Login struct {
+type Credentials struct {
 	Email  string `json:"email"`
 	AuthPW string `json"authPW"`
 }
 
 type Client struct {
+	AuthServer string
 }
 
 func NewClient() (*Client, error) {
 
-	cl := Client{}
+	cl := Client{
+		AuthServer: "https://api.accounts.firefox.com/v1",
+	}
 
 	return &cl, nil
 }
@@ -37,11 +43,29 @@ func (cl *Client) Login(email string, password string) error {
 		return err
 	}
 
-	l := Login{
+	creds := Credentials{
 		Email:  email,
 		AuthPW: hex.EncodeToString(k),
 	}
 
-	log.Println(l)
+	enc_creds, err := json.Marshal(creds)
+
+	if err != nil {
+		return err
+	}
+
+	fh := bytes.NewReader(enc_creds)
+
+	rsp, err := http.Post(cl.AuthServer, "application/json", fh)
+
+	if err != nil {
+		return err
+	}
+
+	if rsp.StatusCode != 200 {
+		return errors.New(rsp.Status)
+	}
+
+	log.Println(rsp)
 	return nil
 }

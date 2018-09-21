@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -56,7 +57,9 @@ func (cl *Client) Login(email string, password string) error {
 
 	fh := bytes.NewReader(enc_creds)
 
-	rsp, err := http.Post(cl.AuthServer, "application/json", fh)
+	url := fmt.Sprintf("%s/account/login", cl.AuthServer)
+
+	rsp, err := http.Post(url, "application/json", fh)
 
 	if err != nil {
 		return err
